@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Layout as AntLayout, Menu, Avatar, Dropdown, Button, Badge } from 'antd';
+import { Layout as AntLayout, Menu, Avatar, Dropdown, Button, Badge, type MenuProps } from 'antd';
 import {
   HomeOutlined,
   BookOutlined,
@@ -39,6 +39,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       label: '首页',
     },
     {
+      key: '/upload',
+      icon: <RobotOutlined />,
+      label: '上传鉴定',
+    },
+    {
       key: '/stamps',
       icon: <BookOutlined />,
       label: '邮票库',
@@ -60,7 +65,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     },
   ];
 
-  const userMenuItems = [
+  const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
@@ -99,9 +104,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         trigger={null} 
         collapsible 
         collapsed={collapsed}
-        theme="light"
         style={{
-          boxShadow: '2px 0 6px rgba(0,21,41,.08)',
+          overflow: 'auto',
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
         }}
       >
         <div style={{ 
@@ -109,17 +118,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          borderBottom: '1px solid #f0f0f0'
+          background: '#001529',
+          color: 'white',
+          fontSize: 16,
+          fontWeight: 'bold'
         }}>
-          <h2 style={{ 
-            margin: 0, 
-            color: '#1890ff',
-            fontSize: collapsed ? 16 : 20
-          }}>
-            {collapsed ? 'PM' : 'PostMind'}
-          </h2>
+          {collapsed ? 'PM' : 'PostMind'}
         </div>
         <Menu
+          theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems}
@@ -127,14 +134,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       </Sider>
       
-      <AntLayout>
+      <AntLayout style={{ marginLeft: collapsed ? 80 : 200, transition: 'all 0.2s' }}>
         <Header style={{ 
-          padding: '0 16px', 
-          background: '#fff',
-          boxShadow: '0 1px 4px rgba(0,21,41,.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
+          padding: '0 24px', 
+          background: '#fff', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
           <Button
             type="text"
@@ -170,7 +177,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 transition: 'background-color 0.3s'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                e.currentTarget.style.backgroundColor = '#f0f0f0';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -179,23 +186,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Avatar 
                   src={user?.avatar} 
                   icon={<UserOutlined />}
-                  size="small"
+                  style={{ marginRight: 8 }}
                 />
-                <span style={{ marginLeft: 8, marginRight: 4 }}>
-                  {user?.username}
-                </span>
+                <span>{user?.username || '用户'}</span>
               </div>
             </Dropdown>
           </div>
         </Header>
         
         <Content style={{ 
-          margin: '16px',
-          padding: '16px',
-          background: '#fff',
-          borderRadius: 6,
+          margin: '24px 16px',
+          padding: 24,
           minHeight: 280,
-          overflow: 'auto'
+          background: '#fff',
+          borderRadius: 8
         }}>
           {children}
         </Content>
