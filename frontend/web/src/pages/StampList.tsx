@@ -153,7 +153,7 @@ const StampList: React.FC = () => {
                     title={
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <span style={{ flex: 1 }}>{stamp.name}</span>
-                        <Tag color={getRarityColor(stamp.rarity)} size="small">
+                        <Tag color={getRarityColor(stamp.rarity)}>
                           {getRarityText(stamp.rarity)}
                         </Tag>
                       </div>

@@ -105,7 +105,7 @@ const StampDetail: React.FC = () => {
           <Card>
             <Title level={2}>{currentStamp.name}</Title>
             <div style={{ marginBottom: 16 }}>
-              <Tag color={getRarityColor(currentStamp.rarity)} size="large">
+              <Tag color={getRarityColor(currentStamp.rarity)}>
                 {getRarityText(currentStamp.rarity)}
               </Tag>
               <Tag>{currentStamp.category}</Tag>

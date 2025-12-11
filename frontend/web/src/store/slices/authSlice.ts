@@ -35,8 +35,8 @@ export const login = createAsyncThunk(
   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await authAPI.login(credentials);
-      localStorage.setItem('token', response.token);
-      return response;
+      localStorage.setItem('token', response.data.token);
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || '登录失败');
     }
@@ -53,8 +53,8 @@ export const register = createAsyncThunk(
   }, { rejectWithValue }) => {
     try {
       const response = await authAPI.register(userData);
-      localStorage.setItem('token', response.token);
-      return response;
+      localStorage.setItem('token', response.data.token);
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || '注册失败');
     }
@@ -66,7 +66,7 @@ export const getUserProfile = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await authAPI.getProfile();
-      return response.user;
+      return response.data.user;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || '获取用户信息失败');
     }

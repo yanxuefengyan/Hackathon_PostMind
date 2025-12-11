@@ -1,25 +1,98 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Card, Button, Typography, Space, Alert, Spin, message } from 'antd';
-import { CameraOutlined, ReloadOutlined, UploadOutlined, StopOutlined, SwapOutlined } from '@ant-design/icons';
+import { Card, Button, Typography, Space, Alert, Spin, message, List, Result } from 'antd';
+import { CameraOutlined, ReloadOutlined, UploadOutlined, StopOutlined, SwapOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
-const CameraUpload: React.FC = () => {
+const CameraDiagnosis: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentCamera, setCurrentCamera] = useState<string>('');
   const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+  const [diagnosticResults, setDiagnosticResults] = useState<any[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const navigate = useNavigate();
 
+  // 诊断摄像头功能
+  const runDiagnosis = async () => {
+    const results = [];
+    
+    // 检查浏览器支持
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      results.push({
+        status: 'error',
+        title: '浏览器支持',
+        description: '您的浏览器不支持摄像头功能，请使用Chrome、Firefox或Edge浏览器'
+      });
+      setDiagnosticResults(results);
+      return;
+    } else {
+      results.push({
+        status: 'success',
+        title: '浏览器支持',
+        description: '浏览器支持摄像头功能'
+      });
+    }
+
+    // 检查HTTPS
+    const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+    if (!isSecure) {
+      results.push({
+        status: 'warning',
+        title: '安全连接',
+        description: '建议使用HTTPS连接访问摄像头功能'
+      });
+    } else {
+      results.push({
+        status: 'success',
+        title: '安全连接',
+        description: '连接安全，支持摄像头访问'
+      });
+    }
+
+    // 检查可用摄像头
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      if (videoDevices.length === 0) {
+        results.push({
+          status: 'error',
+          title: '摄像头设备',
+          description: '未检测到任何摄像头设备，请确保摄像头已连接'
+        });
+      } else {
+        results.push({
+          status: 'success',
+          title: '摄像头设备',
+          description: `检测到 ${videoDevices.length} 个摄像头设备`
+        });
+      }
+      
+      setAvailableCameras(videoDevices);
+      if (videoDevices.length > 0 && !currentCamera) {
+        setCurrentCamera(videoDevices[0].deviceId);
+      }
+    } catch (err) {
+      results.push({
+        status: 'error',
+        title: '摄像头检测',
+        description: '无法检测摄像头设备'
+      });
+    }
+
+    setDiagnosticResults(results);
+  };
+
   const startCamera = async () => {
     try {
       setError(null);
+      setLoading(true);
       
       // 首先检查浏览器是否支持getUserMedia
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -29,9 +102,8 @@ const CameraUpload: React.FC = () => {
       // 尝试获取摄像头权限和流
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user' // 优先使用前置摄像头
+          width: { ideal: 640 },
+          height: { ideal: 480 }
         },
         audio: false
       });
@@ -43,6 +115,7 @@ const CameraUpload: React.FC = () => {
         
         // 立即更新状态
         setIsStreaming(true);
+        setLoading(false);
         
         // 等待视频元数据加载完成后播放
         videoRef.current.onloadedmetadata = () => {
@@ -59,10 +132,12 @@ const CameraUpload: React.FC = () => {
           if (videoRef.current && videoRef.current.readyState < 2) {
             setError('摄像头加载超时，请重试');
             setIsStreaming(false);
+            setLoading(false);
           }
         }, 5000);
       }
     } catch (err: any) {
+      setLoading(false);
       console.error('Camera access error:', err);
       let errorMessage = '无法访问摄像头，请确保已授予权限且摄像头未被其他应用占用';
       
@@ -110,36 +185,24 @@ const CameraUpload: React.FC = () => {
     }
   }, [stopCamera]);
 
-  const retakePhoto = () => {
-    setCapturedImage(null);
-    startCamera();
-  };
-
   const uploadPhoto = async () => {
     if (!capturedImage) return;
 
     setLoading(true);
     try {
-      // Convert base64 to blob
       const response = await fetch(capturedImage);
       const blob = await response.blob();
       const formData = new FormData();
       formData.append('image', blob, `camera-capture-${Date.now()}.jpg`);
 
-      // Upload to backend
-      const uploadResponse = await fetch('/api/v1/upload/image', {
+      const uploadResponse = await fetch('/api/v1/upload/mobile', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
         body: formData,
       });
 
       if (uploadResponse.ok) {
         const result = await uploadResponse.json();
         message.success('图片上传成功！');
-        
-        // Navigate to AI authentication with uploaded image
         navigate('/auth', { state: { uploadedImage: result.fileUrl } });
       } else {
         throw new Error('上传失败');
@@ -158,62 +221,11 @@ const CameraUpload: React.FC = () => {
     navigate('/upload');
   };
 
-  // Get available cameras
-  const getAvailableCameras = async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      setAvailableCameras(videoDevices);
-      
-      if (videoDevices.length > 0 && !currentCamera) {
-        setCurrentCamera(videoDevices[0].deviceId);
-      }
-    } catch (err) {
-      console.error('Error getting cameras:', err);
-    }
-  };
-
-  // Switch camera
-  const switchCamera = async () => {
-    if (availableCameras.length <= 1) {
-      message.warning('只有一个可用摄像头');
-      return;
-    }
-
-    const currentIndex = availableCameras.findIndex(cam => cam.deviceId === currentCamera);
-    const nextIndex = (currentIndex + 1) % availableCameras.length;
-    const nextCamera = availableCameras[nextIndex].deviceId;
-    
-    stopCamera();
-    
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          deviceId: { exact: nextCamera },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setCurrentCamera(nextCamera);
-        setIsStreaming(true);
-      }
-    } catch (err) {
-      console.error('Error switching camera:', err);
-      setError('切换摄像头失败');
-      message.error('切换摄像头失败');
-    }
-  };
-
-  // Initialize cameras on mount
+  // 组件挂载时运行诊断
   React.useEffect(() => {
-    getAvailableCameras();
+    runDiagnosis();
   }, []);
 
-  // Cleanup on unmount
   React.useEffect(() => {
     return () => {
       stopCamera();
@@ -224,12 +236,39 @@ const CameraUpload: React.FC = () => {
     <div>
       <Card style={{ marginBottom: 24 }}>
         <Title level={2}>
-          <CameraOutlined /> 电脑摄像头拍摄
+          <CameraOutlined /> 摄像头诊断与拍摄
         </Title>
         <Paragraph>
-          使用电脑摄像头拍摄邮票照片，支持实时预览和高清拍摄
+          智能诊断摄像头功能，提供详细的错误分析和解决方案
         </Paragraph>
       </Card>
+
+      {/* 诊断结果 */}
+      {diagnosticResults.length > 0 && (
+        <Card title="诊断结果" style={{ marginBottom: 24 }}>
+          <List
+            dataSource={diagnosticResults}
+            renderItem={(item) => (
+              <List.Item>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  {item.status === 'success' ? (
+                    <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 12, fontSize: 18 }} />
+                  ) : item.status === 'warning' ? (
+                    <ExclamationCircleOutlined style={{ color: '#faad14', marginRight: 12, fontSize: 18 }} />
+                  ) : (
+                    <ExclamationCircleOutlined style={{ color: '#f5222d', marginRight: 12, fontSize: 18 }} />
+                  )}
+                  <div>
+                    <Text strong>{item.title}</Text>
+                    <br />
+                    <Text type="secondary">{item.description}</Text>
+                  </div>
+                </div>
+              </List.Item>
+            )}
+          />
+        </Card>
+      )}
 
       {error && (
         <Alert
@@ -249,38 +288,46 @@ const CameraUpload: React.FC = () => {
             {!isStreaming ? (
               <div style={{ padding: '60px 0' }}>
                 <CameraOutlined style={{ fontSize: 64, color: '#d9d9d9', marginBottom: 24 }} />
-                <Title level={3}>准备拍照</Title>
+                <Title level={3}>摄像头准备</Title>
                 <Paragraph style={{ color: '#666', marginBottom: 32 }}>
-                  点击下方按钮启动摄像头，确保光线充足且邮票清晰可见
+                  基于诊断结果，点击下方按钮启动摄像头
                 </Paragraph>
-                <Space>
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<CameraOutlined />}
-                    onClick={startCamera}
-                  >
-                    启动摄像头
-                  </Button>
-                  <Button
-                    size="large"
-                    icon={<SwapOutlined />}
-                    onClick={switchCamera}
-                    disabled={availableCameras.length <= 1}
-                  >
-                    切换摄像头
-                  </Button>
-                  <Button
-                    size="large"
-                    icon={<StopOutlined />}
-                    onClick={stopCamera}
-                    disabled={!isStreaming}
-                  >
-                    停止摄像头
-                  </Button>
-                  <Button size="large" onClick={goBack}>
-                    返回
-                  </Button>
+                <Space direction="vertical" size="large">
+                  <Space>
+                    <Button
+                      type="primary"
+                      size="large"
+                      icon={<CameraOutlined />}
+                      onClick={startCamera}
+                      loading={loading}
+                      disabled={diagnosticResults.some(r => r.status === 'error')}
+                    >
+                      启动摄像头
+                    </Button>
+                    <Button
+                      size="large"
+                      icon={<ReloadOutlined />}
+                      onClick={runDiagnosis}
+                    >
+                      重新诊断
+                    </Button>
+                  </Space>
+                  
+                  {/* 备选方案 */}
+                  <Card size="small" title="备选方案">
+                    <Space direction="vertical">
+                      <Button 
+                        size="large" 
+                        icon={<UploadOutlined />}
+                        onClick={() => navigate('/upload/local')}
+                      >
+                        本地图片上传
+                      </Button>
+                      <Text type="secondary">
+                        如果摄像头无法正常工作，可以选择本地图片上传
+                      </Text>
+                    </Space>
+                  </Card>
                 </Space>
               </div>
             ) : (
@@ -308,14 +355,6 @@ const CameraUpload: React.FC = () => {
                   </Button>
                   <Button
                     size="large"
-                    icon={<SwapOutlined />}
-                    onClick={switchCamera}
-                    disabled={availableCameras.length <= 1}
-                  >
-                    切换摄像头
-                  </Button>
-                  <Button
-                    size="large"
                     icon={<StopOutlined />}
                     onClick={stopCamera}
                   >
@@ -330,38 +369,42 @@ const CameraUpload: React.FC = () => {
           </div>
         ) : (
           <div style={{ textAlign: 'center' }}>
-            <img
-              src={capturedImage}
-              alt="Captured"
-              style={{
-                width: '100%',
-                maxWidth: '800px',
-                borderRadius: 8,
-                marginBottom: 24,
-                border: '2px solid #52c41a'
-              }}
-            />
-            <Space size="large">
-              <Button
-                type="primary"
-                size="large"
-                icon={<UploadOutlined />}
-                onClick={uploadPhoto}
-                loading={loading}
-              >
-                {loading ? '上传中...' : '上传图片'}
-              </Button>
-              <Button
-                size="large"
-                icon={<ReloadOutlined />}
-                onClick={retakePhoto}
-              >
-                重新拍摄
-              </Button>
-              <Button size="large" onClick={goBack}>
-                返回
-              </Button>
-            </Space>
+            <Result
+              status="success"
+              title="拍照成功！"
+              subTitle="图片已准备就绪，可以进行上传分析"
+              extra={[
+                <Button
+                  key="upload"
+                  type="primary"
+                  size="large"
+                  icon={<UploadOutlined />}
+                  onClick={uploadPhoto}
+                  loading={loading}
+                >
+                  {loading ? '上传中...' : '上传图片'}
+                </Button>,
+                <Button
+                  key="retake"
+                  size="large"
+                  icon={<ReloadOutlined />}
+                  onClick={() => setCapturedImage(null)}
+                >
+                  重新拍摄
+                </Button>
+              ]}
+            >
+              <img
+                src={capturedImage}
+                alt="Captured"
+                style={{
+                  width: '100%',
+                  maxWidth: '400px',
+                  borderRadius: 8,
+                  marginTop: 24
+                }}
+              />
+            </Result>
           </div>
         )}
       </Card>
@@ -371,4 +414,4 @@ const CameraUpload: React.FC = () => {
   );
 };
 
-export default CameraUpload;
+export default CameraDiagnosis;

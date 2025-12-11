@@ -46,6 +46,7 @@ interface StampState {
     rarity?: string;
     sortBy: string;
     sortOrder: string;
+    page?: number;
   };
 }
 
@@ -69,7 +70,7 @@ const initialState: StampState = {
 // 异步thunks
 export const fetchStamps = createAsyncThunk(
   'stamps/fetchStamps',
-  async (params?: {
+  async (params: {
     page?: number;
     limit?: number;
     search?: string;
@@ -78,10 +79,10 @@ export const fetchStamps = createAsyncThunk(
     rarity?: string;
     sortBy?: string;
     sortOrder?: string;
-  }, { rejectWithValue }) => {
+  } = {}, { rejectWithValue }) => {
     try {
       const response = await stampAPI.getStamps(params);
-      return response;
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || '获取邮票列表失败');
     }
@@ -93,7 +94,7 @@ export const fetchStampById = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       const response = await stampAPI.getStampById(id);
-      return response.stamp;
+      return response.data.stamp;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || '获取邮票详情失败');
     }
@@ -105,7 +106,7 @@ export const createStamp = createAsyncThunk(
   async (stampData: Partial<Stamp>, { rejectWithValue }) => {
     try {
       const response = await stampAPI.createStamp(stampData);
-      return response.stamp;
+      return response.data.stamp;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || '创建邮票失败');
     }
@@ -117,7 +118,7 @@ export const updateStamp = createAsyncThunk(
   async ({ id, data }: { id: string; data: Partial<Stamp> }, { rejectWithValue }) => {
     try {
       const response = await stampAPI.updateStamp(id, data);
-      return response.stamp;
+      return response.data.stamp;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || '更新邮票失败');
     }

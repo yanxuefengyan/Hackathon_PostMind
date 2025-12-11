@@ -4,9 +4,10 @@
   "description": "AI赋能集邮文化全场景智能互动平台",
   "main": "index.js",
   "scripts": {
+    "start": "npm run dev",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend/web && npm run dev",
+    "dev:frontend": "cd frontend/web && npm run start",
     "build": "npm run build:frontend && npm run build:mobile",
     "build:frontend": "cd frontend/web && npm run build",
     "build:mobile": "cd frontend/mobile && npm run build",

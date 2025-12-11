@@ -15,6 +15,8 @@ import Profile from './pages/Profile';
 import Community from './pages/Community';
 import UploadOptions from './pages/UploadOptions';
 import CameraUpload from './pages/CameraUpload';
+import CameraDiagnosis from './pages/CameraDiagnosis';
+import SimpleCamera from './pages/SimpleCamera';
 import LocalUpload from './pages/LocalUpload';
 import MobileUpload from './pages/MobileUpload';
 import './App.css';
@@ -37,6 +39,8 @@ function App() {
               <Route path="/community" element={<Layout><Community /></Layout>} />
               <Route path="/upload" element={<Layout><UploadOptions /></Layout>} />
               <Route path="/upload/camera" element={<Layout><CameraUpload /></Layout>} />
+              <Route path="/upload/diagnosis" element={<Layout><CameraDiagnosis /></Layout>} />
+              <Route path="/upload/simple" element={<Layout><SimpleCamera /></Layout>} />
               <Route path="/upload/local" element={<Layout><LocalUpload /></Layout>} />
               <Route path="/upload/mobile" element={<Layout><MobileUpload /></Layout>} />
             </Routes>

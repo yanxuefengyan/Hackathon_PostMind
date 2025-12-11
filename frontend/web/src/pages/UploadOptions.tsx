@@ -15,10 +15,17 @@ const UploadOptions: React.FC = () => {
   const uploadOptions = [
     {
       icon: <CameraOutlined style={{ fontSize: 48, color: '#1890ff' }} />,
-      title: '电脑摄像头',
-      description: '打开电脑摄像头直接拍摄',
+      title: '简易摄像头',
+      description: '简单可靠的摄像头拍照功能',
       buttonText: '启动摄像头',
-      action: () => navigate('/upload/camera'),
+      action: () => navigate('/upload/simple'),
+    },
+    {
+      icon: <CameraOutlined style={{ fontSize: 48, color: '#722ed1' }} />,
+      title: '高级摄像头',
+      description: '智能诊断并启动电脑摄像头',
+      buttonText: '高级模式',
+      action: () => navigate('/upload/diagnosis'),
     },
     {
       icon: <UploadOutlined style={{ fontSize: 48, color: '#52c41a' }} />,
