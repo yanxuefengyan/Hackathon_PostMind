@@ -1,12 +1,9 @@
-
-
-```markdown
 # 邮迹寻踪 PostMind  
 ### AI赋能集邮文化 · 全场景智能互动平台  
 
-![PostMind Logo](https://img.shields.io/badge/Project-PostMind-blue)  
-![AI-Powered](https://img.shields.io/badge/AI-Powered-orange)  
-![Multi-Platform](https://img.shields.io/badge/Platform-APP%2BWeb-green)  
+演示视频：https://live.csdn.net/v/505234
+
+github地址：https://github.com/yanxuefengyan/Hackathon_PostMind.git
 
 ---
 
@@ -101,4 +98,5 @@
 
 **让每一枚邮票，都有一段AI讲述的故事。**  
 ```
+
 
