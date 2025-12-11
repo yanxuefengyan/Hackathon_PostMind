@@ -13,6 +13,10 @@ import StampDetail from './pages/StampDetail';
 import AIAuthentication from './pages/AIAuthentication';
 import Profile from './pages/Profile';
 import Community from './pages/Community';
+import UploadOptions from './pages/UploadOptions';
+import CameraUpload from './pages/CameraUpload';
+import LocalUpload from './pages/LocalUpload';
+import MobileUpload from './pages/MobileUpload';
 import './App.css';
 
 function App() {
@@ -31,6 +35,10 @@ function App() {
               <Route path="/auth" element={<Layout><AIAuthentication /></Layout>} />
               <Route path="/profile" element={<Layout><Profile /></Layout>} />
               <Route path="/community" element={<Layout><Community /></Layout>} />
+              <Route path="/upload" element={<Layout><UploadOptions /></Layout>} />
+              <Route path="/upload/camera" element={<Layout><CameraUpload /></Layout>} />
+              <Route path="/upload/local" element={<Layout><LocalUpload /></Layout>} />
+              <Route path="/upload/mobile" element={<Layout><MobileUpload /></Layout>} />
             </Routes>
           </div>
         </Router>

@@ -69,7 +69,7 @@ module.exports = (sequelize, DataTypes) => {
         min: 0
       }
     },
-    comments: {
+    commentCount: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
       validate: {
@@ -121,7 +121,7 @@ module.exports = (sequelize, DataTypes) => {
     // 帖子关联评论
     Post.hasMany(models.Comment, {
       foreignKey: 'postId',
-      as: 'comments'
+      as: 'postComments'
     });
 
     // 帖子关联点赞的用户（多对多）

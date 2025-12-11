@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Card, Upload, Button, Typography, Steps, Result, Spin, Tag, Alert } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Upload, Button, Typography, Steps, Result, Spin, Tag, Alert, Image } from 'antd';
 import { UploadOutlined, RobotOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
 const { Dragger } = Upload;
@@ -29,6 +30,21 @@ const AIAuthentication: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<AuthenticationResult | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [preUploadedImage, setPreUploadedImage] = useState<string | null>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Check for pre-uploaded image from location state
+  useEffect(() => {
+    if (location.state?.uploadedImage) {
+      setPreUploadedImage(location.state.uploadedImage);
+      setCurrentStep(1);
+      // Automatically start AI analysis
+      setTimeout(() => {
+        performAIAnalysis(location.state.uploadedImage);
+      }, 1000);
+    }
+  }, [location.state]);
 
   const uploadProps: UploadProps = {
     name: 'images',
@@ -53,6 +69,41 @@ const AIAuthentication: React.FC = () => {
     onDrop(e) {
       console.log('Dropped files', e.dataTransfer.files);
     },
+  };
+
+  const performAIAnalysis = (imageUrl: string) => {
+    setUploading(true);
+    setCurrentStep(1);
+
+    // 模拟AI鉴定过程
+    setTimeout(() => {
+      const mockResult: AuthenticationResult = {
+        result: Math.random() > 0.3 ? 'authentic' : Math.random() > 0.5 ? 'fake' : 'uncertain',
+        confidence: Math.floor(Math.random() * 30) + 70,
+        analysis: {
+          paperQuality: Math.floor(Math.random() * 30) + 70,
+          printingQuality: Math.floor(Math.random() * 30) + 70,
+          colorAccuracy: Math.floor(Math.random() * 30) + 70,
+          perforation: Math.floor(Math.random() * 30) + 70,
+          overall: Math.floor(Math.random() * 30) + 70,
+        },
+        features: {
+          detectedFeatures: ['水印', '齿孔', '纸张纹理', '印刷网点'],
+          anomalies: [],
+          similarities: ['印刷特征匹配', '纸张类型一致'],
+        },
+        processingTime: Math.floor(Math.random() * 5000) + 2000,
+      };
+
+      if (mockResult.result === 'fake') {
+        mockResult.features.anomalies = ['颜色偏差', '纸张质量异常'];
+        mockResult.features.similarities = [];
+      }
+
+      setResult(mockResult);
+      setCurrentStep(2);
+      setUploading(false);
+    }, 3000);
   };
 
   const handleUpload = async () => {
@@ -99,6 +150,13 @@ const AIAuthentication: React.FC = () => {
     setFileList([]);
     setResult(null);
     setCurrentStep(0);
+    setPreUploadedImage(null);
+    // Clear location state
+    navigate(location.pathname, { replace: true, state: null });
+  };
+
+  const goBackToUpload = () => {
+    navigate('/upload');
   };
 
   const getResultIcon = () => {
@@ -168,16 +226,24 @@ const AIAuthentication: React.FC = () => {
           </Dragger>
 
           <div style={{ textAlign: 'center' }}>
-            <Button
-              type="primary"
-              size="large"
-              icon={<UploadOutlined />}
-              onClick={handleUpload}
-              disabled={fileList.length === 0}
-              loading={uploading}
-            >
-              开始AI鉴定
-            </Button>
+            <Space>
+              <Button
+                type="primary"
+                size="large"
+                icon={<UploadOutlined />}
+                onClick={handleUpload}
+                disabled={fileList.length === 0}
+                loading={uploading}
+              >
+                开始AI鉴定
+              </Button>
+              <Button
+                size="large"
+                onClick={goBackToUpload}
+              >
+                返回上传
+              </Button>
+            </Space>
           </div>
         </Card>
       )}
@@ -191,6 +257,15 @@ const AIAuthentication: React.FC = () => {
           <Paragraph>
             请稍候，系统正在进行多维度特征分析
           </Paragraph>
+          {preUploadedImage && (
+            <div style={{ marginTop: 24 }}>
+              <Image
+                src={preUploadedImage}
+                alt="正在分析"
+                style={{ maxWidth: 300, borderRadius: 8 }}
+              />
+            </div>
+          )}
         </Card>
       )}
 
@@ -204,6 +279,9 @@ const AIAuthentication: React.FC = () => {
               <Button type="primary" key="analyze" onClick={resetUpload}>
                 重新鉴定
               </Button>,
+              <Button key="upload" onClick={goBackToUpload}>
+                重新上传
+              </Button>
             ]}
           />
 

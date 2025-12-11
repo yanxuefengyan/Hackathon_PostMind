@@ -17,10 +17,10 @@ const Home: React.FC = () => {
   const features = [
     {
       icon: <RobotOutlined style={{ fontSize: 32, color: '#1890ff' }} />,
-      title: 'AI智能鉴定',
-      description: '基于文心大模型的邮票真伪鉴定，准确率高达95%以上',
-      action: () => navigate('/auth'),
-      buttonText: '立即体验',
+      title: '多方式上传',
+      description: '支持摄像头拍摄、本地上传、手机扫码等多种上传方式',
+      action: () => navigate('/upload'),
+      buttonText: '开始上传',
     },
     {
       icon: <BookOutlined style={{ fontSize: 32, color: '#52c41a' }} />,
@@ -87,10 +87,10 @@ const Home: React.FC = () => {
             type="primary" 
             size="large" 
             icon={<RobotOutlined />}
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/upload')}
             style={{ background: 'white', color: '#1890ff', borderColor: 'white' }}
           >
-            开始AI鉴定
+            开始上传鉴定
           </Button>
           <Button 
             size="large" 

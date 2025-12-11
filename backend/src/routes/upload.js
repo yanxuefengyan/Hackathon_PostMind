@@ -5,6 +5,9 @@ const fs = require('fs');
 const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
+// Session storage for mobile uploads (in production, use Redis)
+const mobileSessions = new Map();
+
 // 配置文件上传
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -35,6 +38,71 @@ const upload = multer({
     } else {
       cb(new Error('只允许上传图片或PDF文件 (JPEG, JPG, PNG, GIF, PDF)'));
     }
+  }
+});
+
+// 移动端上传接口（无需认证）
+router.post('/mobile', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: '请选择要上传的文件' });
+    }
+
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ error: '缺少会话ID' });
+    }
+
+    const fileUrl = `/uploads/general/${req.file.filename}`;
+    
+    // Store image in session
+    if (!mobileSessions.has(sessionId)) {
+      mobileSessions.set(sessionId, []);
+    }
+    
+    const sessionImages = mobileSessions.get(sessionId);
+    sessionImages.push({
+      fileUrl,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype,
+      uploadedAt: new Date()
+    });
+    
+    res.json({
+      message: '文件上传成功',
+      fileUrl,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    });
+
+  } catch (error) {
+    console.error('移动端上传错误:', error);
+    res.status(500).json({ error: '文件上传失败' });
+  }
+});
+
+// 获取移动端会话图片
+router.get('/session/:sessionId', authenticateToken, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    if (!mobileSessions.has(sessionId)) {
+      return res.json({ images: [] });
+    }
+    
+    const sessionImages = mobileSessions.get(sessionId);
+    res.json({ 
+      images: sessionImages.map(img => img.fileUrl),
+      files: sessionImages
+    });
+
+  } catch (error) {
+    console.error('获取会话图片错误:', error);
+    res.status(500).json({ error: '获取会话图片失败' });
   }
 });
 
