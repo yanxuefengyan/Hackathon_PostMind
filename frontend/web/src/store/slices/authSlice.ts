@@ -9,6 +9,8 @@ interface User {
   role: string;
   level?: number;
   experience?: number;
+  bio?: string;
+  phone?: string;
 }
 
 interface AuthState {
