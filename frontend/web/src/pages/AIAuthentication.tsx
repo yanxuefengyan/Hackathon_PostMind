@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Upload, Button, Typography, Steps, Result, Spin, Tag, Alert, Image } from 'antd';
+import { Card, Upload, Button, Typography, Steps, Result, Spin, Tag, Alert, Image, Space } from 'antd';
 import { UploadOutlined, RobotOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
