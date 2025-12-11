@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # 数据库服务
+  postgres:
+    image: postgres:15
+    container_name: postmind-postgres
+    environment:
+      POSTGRES_DB: postmind
+      POSTGRES_USER: postmind
+      POSTGRES_PASSWORD: postmind123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - postmind-network
+
+  # Redis缓存服务
+  redis:
+    image: redis:7-alpine
+    container_name: postmind-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - postmind-network
+
+  # 后端API服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: postmind-backend
+    environment:
+      DATABASE_URL: postgresql://postmind:postmind123@postgres:5432/postmind
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      WENXIN_API_KEY: your-wenxin-api-key
+      WENXIN_SECRET_KEY: your-wenxin-secret-key
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - postmind-network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # 前端Web服务
+  frontend:
+    build:
+      context: ./frontend/web
+      dockerfile: Dockerfile
+    container_name: postmind-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/web:/app
+      - /app/node_modules
+    environment:
+      REACT_APP_API_URL: http://localhost:8000
+    networks:
+      - postmind-network
+    command: npm start
+
+  # 文件存储服务 (MinIO)
+  minio:
+    image: minio/minio:latest
+    container_name: postmind-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - postmind-network
+    command: server /data --console-address ":9001"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  postmind-network:
+    driver: bridge
